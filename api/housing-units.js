@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
   if (dongNm) params.set('dongNm', dongNm);
   if (hoNm) params.set('hoNm', hoNm);
   try {
-    const upstream = await fetch('https://api.vworld.kr/ned/data/getApartHousingPriceAttr?' + params);
+    const upstream = await fetch('http://api.vworld.kr/ned/data/getApartHousingPriceAttr?' + params);
     const body = await upstream.json();
     if (!upstream.ok) return res.status(502).json({ error: 'Official housing-price API failed.' });
     const raw = body?.apartHousingPrices?.field || body?.apartHousingPrices?.item || body?.response?.body?.items?.item || [];
