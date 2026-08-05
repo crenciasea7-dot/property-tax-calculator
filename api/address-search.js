@@ -3,7 +3,7 @@ module.exports = async (req, res) => {
   if (q.length < 2 || q.length > 100) return res.status(400).json({ error: '검색어는 2~100자로 입력해 주세요.' });
   const key = process.env.VWORLD_API_KEY;
   if (!key) return res.status(503).json({ error: '공식 주소 검색 서비스가 아직 설정되지 않았습니다.' });
-  const params = new URLSearchParams({ service: 'search', request: 'search', version: '2.0', type: 'address', category: 'road', format: 'json', size: '10', query: q, key });
+  const params = new URLSearchParams({ service: 'search', request: 'search', version: '2.0', type: 'address', category: 'road', format: 'json', size: '10', query: q, key, domain: 'https://property-tax-verified.vercel.app' });
   try {
     const upstream = await fetch('https://api.vworld.kr/req/search?' + params, { headers: { Accept: 'application/json' } });
     const raw = await upstream.text();
