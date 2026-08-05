@@ -7,7 +7,7 @@ module.exports = async (req, res) => {
   const bbox = [lat - delta, lng - delta, lat + delta, lng + delta, 'EPSG:4326'].join(',');
   const params = new URLSearchParams({ typename: 'dt_d166', bbox, maxFeatures: '100', output: 'application/json', srsName: 'EPSG:4326', key, domain: 'property-tax-verified.vercel.app' });
   try {
-    const upstream = await fetch('https://api.vworld.kr/ned/wfs/getApartHousingPriceWFS?' + params);
+    const upstream = await fetch('http://api.vworld.kr/ned/wfs/getApartHousingPriceWFS?' + params);
     const body = await upstream.json();
     if (!upstream.ok) return res.status(502).json({ error: 'Official housing-price map API failed.' });
     const features = body?.features || [];
