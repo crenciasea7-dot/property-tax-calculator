@@ -77,7 +77,8 @@ async function handler(req, res) {
     }
     return send(res, 404, { error: 'Not found.' });
   } catch (error) {
-    return send(res, 502, { error: 'Official price provider connection failed.' });
+    // Only expose transport information; never include the API key or request URL.
+    return send(res, 502, { error: 'Official price provider connection failed.', detail: String(error.message || error).slice(0, 180) });
   }
 }
 
