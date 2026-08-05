@@ -1,4 +1,4 @@
-const CACHE = 'property-tax-calculator-v1';
+const CACHE = 'property-tax-calculator-v2';
 const ASSETS = ['./', './index.html', './manifest.webmanifest'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
