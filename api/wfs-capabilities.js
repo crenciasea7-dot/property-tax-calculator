@@ -15,7 +15,7 @@ module.exports = async (_req, res) => {
     if (!upstream.ok) return res.status(502).json({ error: 'VWorld WFS request failed.', status: upstream.status, detail: xml.slice(0, 500) });
     const layers = [...xml.matchAll(/<(?:\w+:)?Name>([^<]+)<\/(?:\w+:)?Name>/g)].map((m) => m[1]);
     return res.status(200).json({ layers: layers.filter((n) => /apt|house|housing|주택|공동/i.test(n)) });
-  } catch {
-    return res.status(502).json({ error: 'Could not reach VWorld WFS.' });
+  } catch (error) {
+    return res.status(502).json({ error: 'Could not reach VWorld WFS.', detail: String(error.message || error).slice(0, 500) });
   }
 };
