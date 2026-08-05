@@ -1,5 +1,4 @@
 const http = require('http');
-const https = require('https');
 const { URL } = require('url');
 
 const PORT = process.env.PORT || 3000;
@@ -18,8 +17,8 @@ function send(res, status, data) {
 
 function vworld(path, params) {
   return new Promise((resolve, reject) => {
-    const url = `https://api.vworld.kr${path}?${new URLSearchParams({ ...params, key: VWORLD_API_KEY, domain: ALLOWED_ORIGIN })}`;
-    https.get(url, (upstream) => {
+    const url = `http://api.vworld.kr${path}?${new URLSearchParams({ ...params, key: VWORLD_API_KEY, domain: ALLOWED_ORIGIN })}`;
+    http.get(url, { headers: { 'User-Agent': 'Mozilla/5.0', Referer: ALLOWED_ORIGIN } }, (upstream) => {
       let text = '';
       upstream.setEncoding('utf8');
       upstream.on('data', (chunk) => { text += chunk; });
