@@ -35,6 +35,45 @@
 </main>
 <script>
 const homes=[]; let ownership='single', chart;
+const PRICE_LOOKUP_SERVICE='https://property-tax-price-service.onrender.com';
+let selectedComplex=null;
+
+function lookupMessage(message, isError=false){
+  const area=document.getElementById('officialLookupResults');
+  if(area) area.innerHTML=`<div style="margin-top:8px;padding:10px 11px;border:1px solid ${isError?'#ffd0cc':'#dce7ff'};border-radius:9px;background:${isError?'#fff5f4':'#f6f9ff'};color:${isError?'#b42318':'#35517a'};font-size:12px;line-height:1.5">${esc(message)}</div>`;
+}
+function buildOfficialLookup(){
+  const name=document.getElementById('name'); if(!name||document.getElementById('officialLookup')) return;
+  const panel=document.createElement('div'); panel.id='officialLookup';
+  panel.innerHTML=`<label class="first">공시가격 자동 조회 <span class="hint">브이월드 공동주택가격</span></label><div style="display:flex;gap:8px"><input id="officialAddress" placeholder="예) 서울시 마포구 마포대로 195" autocomplete="street-address"><button id="officialSearch" type="button" class="secondary" style="height:45px;white-space:nowrap">주소 검색</button></div><div id="officialLookupResults"></div><p class="search-help">주소 → 단지 선택 → 동·호 입력 순서로 2026년 공동주택 공시가격을 불러옵니다.</p>`;
+  name.parentNode.insertBefore(panel,name);
+  document.getElementById('officialSearch').onclick=searchOfficialAddress;
+  document.getElementById('officialAddress').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchOfficialAddress()}});
+}
+async function fetchOfficial(path){
+  const response=await fetch(`${PRICE_LOOKUP_SERVICE}${path}`);
+  const body=await response.json().catch(()=>({error:'공식 조회 서버의 응답을 읽지 못했습니다.'}));
+  if(!response.ok) throw new Error(body.error||body.detail||'공시가격 조회에 실패했습니다.');
+  return body;
+}
+function pointOf(item){ const p=item.point||{}; return {lat:Number(p.y??p.lat??p.latitude),lng:Number(p.x??p.lng??p.longitude)} }
+async function searchOfficialAddress(){
+  const q=document.getElementById('officialAddress').value.trim();
+  if(q.length<2) return lookupMessage('주소를 두 글자 이상 입력하세요.',true);
+  lookupMessage('주소를 찾는 중입니다…');
+  try{const data=await fetchOfficial(`/address-search?q=${encodeURIComponent(q)}`);const items=data.items||[];if(!items.length)return lookupMessage('주소 후보를 찾지 못했습니다. 도로명 또는 지번으로 다시 입력해 주세요.',true);const area=document.getElementById('officialLookupResults');area.innerHTML=items.map((x,i)=>`<button type="button" class="secondary" style="display:block;width:100%;height:auto;min-height:38px;margin-top:7px;text-align:left;padding:8px" onclick="chooseOfficialAddress(${i})">${esc(x.title||x.address)}</button>`).join('');window.__officialAddresses=items}catch(e){lookupMessage(e.message||'공시가격 조회 서버에 연결하지 못했습니다.',true)}}
+async function chooseOfficialAddress(index){
+  const item=(window.__officialAddresses||[])[index],point=pointOf(item);if(!Number.isFinite(point.lat)||!Number.isFinite(point.lng))return lookupMessage('이 주소의 좌표를 받지 못했습니다. 다른 주소 후보를 선택해 주세요.',true);
+  lookupMessage('해당 주소의 공동주택 단지를 찾는 중입니다…');
+  try{const data=await fetchOfficial(`/complexes?lat=${encodeURIComponent(point.lat)}&lng=${encodeURIComponent(point.lng)}`);const complexes=data.complexes||[];if(!complexes.length)return lookupMessage('이 주소 주변의 공동주택 단지를 찾지 못했습니다. 공식 공시가격 찾기를 이용해 주세요.',true);const area=document.getElementById('officialLookupResults');area.innerHTML=complexes.map((x,i)=>`<button type="button" class="secondary" style="display:block;width:100%;height:auto;min-height:38px;margin-top:7px;text-align:left;padding:8px" onclick="chooseOfficialComplex(${i})">${esc(x.name||'공동주택')} ${x.units?`(${x.units.toLocaleString()}세대)`:''}</button>`).join('');window.__officialComplexes=complexes}catch(e){lookupMessage(e.message||'공동주택 단지 조회에 실패했습니다.',true)}}
+function chooseOfficialComplex(index){
+  selectedComplex=(window.__officialComplexes||[])[index]; if(!selectedComplex)return;const area=document.getElementById('officialLookupResults');area.innerHTML=`<div style="margin-top:8px;padding:10px 11px;border:1px solid #dce7ff;border-radius:9px;background:#f6f9ff;font-size:12px"><b>${esc(selectedComplex.name||'선택한 공동주택')}</b><div style="display:flex;gap:7px;margin-top:8px"><input id="officialDong" placeholder="동" inputmode="numeric"><input id="officialHo" placeholder="호" inputmode="numeric"><button type="button" class="secondary" style="height:45px;white-space:nowrap" onclick="loadOfficialPrice()">가격 불러오기</button></div></div>`;
+}
+async function loadOfficialPrice(){
+  const dong=document.getElementById('officialDong').value.trim(),ho=document.getElementById('officialHo').value.trim();if(!dong||!ho)return lookupMessage('동과 호를 모두 입력하세요.',true);lookupMessage('공식 공시가격을 불러오는 중입니다…');
+  try{const data=await fetchOfficial(`/units?pnu=${encodeURIComponent(selectedComplex.pnu)}&dong=${encodeURIComponent(dong)}&ho=${encodeURIComponent(ho)}`);const row=(data.rows||[]).find(x=>x.price>0);if(!row)return lookupMessage('해당 동·호의 2026년 공시가격을 찾지 못했습니다. 동·호 표기를 확인해 주세요.',true);document.getElementById('price').value=Math.round(row.price/10000);document.getElementById('name').value=`${row.complex||selectedComplex.name} ${row.dong||dong}동 ${row.ho||ho}호`;document.getElementById('formStatus').textContent='공시가격 입력 완료';lookupMessage(`${Number(row.price).toLocaleString()}원이 자동 입력되었습니다.`)}catch(e){lookupMessage(e.message||'공시가격 조회에 실패했습니다.',true)}}
+window.chooseOfficialAddress=chooseOfficialAddress;window.chooseOfficialComplex=chooseOfficialComplex;window.loadOfficialPrice=loadOfficialPrice;
+buildOfficialLookup();
 const won=n=>new Intl.NumberFormat('ko-KR').format(Math.round(n))+'원';
 const man=n=>Math.round(n/10000).toLocaleString()+'만원';
 const pct=n=>`${n>=0?'+':''}${n.toFixed(1)}%`;
