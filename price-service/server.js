@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const { URL } = require('url');
 
 const PORT = process.env.PORT || 3000;
@@ -17,8 +18,8 @@ function send(res, status, data) {
 
 function vworld(path, params) {
   return new Promise((resolve, reject) => {
-    const url = `http://api.vworld.kr${path}?${new URLSearchParams({ ...params, key: VWORLD_API_KEY, domain: ALLOWED_ORIGIN })}`;
-    http.get(url, { headers: { 'User-Agent': 'Mozilla/5.0', Referer: ALLOWED_ORIGIN } }, (upstream) => {
+    const url = `https://api.vworld.kr${path}?${new URLSearchParams({ ...params, key: VWORLD_API_KEY, domain: ALLOWED_ORIGIN })}`;
+    https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0', Referer: ALLOWED_ORIGIN, Origin: ALLOWED_ORIGIN } }, (upstream) => {
       let text = '';
       upstream.setEncoding('utf8');
       upstream.on('data', (chunk) => { text += chunk; });
@@ -59,7 +60,8 @@ async function handler(req, res) {
       const lat = Number(url.searchParams.get('lat')), lng = Number(url.searchParams.get('lng'));
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return send(res, 400, { error: 'Coordinates are required.' });
       const d = 0.0015;
-      const bbox = [lat - d, lng - d, lat + d, lng + d, 'EPSG:4326'].join(',');
+      // EPSG:4326 WFS bounding boxes are x/y (longitude/latitude), not lat/lng.
+      const bbox = [lng - d, lat - d, lng + d, lat + d, 'EPSG:4326'].join(',');
       const result = await vworld('/ned/wfs/getApartHousingPriceWFS', { typename: 'dt_d166', bbox, maxFeatures: '100', output: 'application/json', srsName: 'EPSG:4326' });
       const features = result.body?.features || [];
       return send(res, 200, { complexes: features.map((feature) => {
