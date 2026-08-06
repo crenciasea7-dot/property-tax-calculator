@@ -100,5 +100,11 @@ function draw(){const slider=document.getElementById('growthSlider'),growth=+sli
 ['oneHome','regulated','age','holdPeriod','livePeriod'].forEach(id=>document.getElementById(id).onchange=()=>homes.length&&render());
 document.getElementById('add').onclick=()=>{const price=+document.getElementById('price').value*10000;if(!price){document.getElementById('price').focus();document.getElementById('formStatus').textContent='가격 입력';return}homes.push({name:document.getElementById('name').value.trim(),price,share:+document.getElementById('share').value,resident:document.getElementById('resident').value==='yes'});document.getElementById('name').value='';document.getElementById('price').value='';document.getElementById('formStatus').textContent='ADDED';render()};
 document.getElementById('sample').onclick=()=>{homes.splice(0,homes.length,{name:'마포래미안푸르지오 4단지 413동 2605호',price:1763000000,share:100,resident:true});document.getElementById('oneHome').checked=true;render()};
-if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
+// 이 계산기는 항상 최신 세법·입력 화면을 열어야 하므로 오프라인 캐시는 사용하지 않습니다.
+// 예전에 설치된 서비스워커가 있으면 제거해 이전 화면이 남지 않게 합니다.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    registrations.forEach(registration => registration.unregister());
+  });
+}
 </script></body></html>
