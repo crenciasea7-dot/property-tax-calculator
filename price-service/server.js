@@ -25,7 +25,11 @@ function vworld(path, params) {
       upstream.on('data', (chunk) => { text += chunk; });
       upstream.on('end', () => {
         try { resolve({ status: upstream.statusCode || 500, body: JSON.parse(text) }); }
-        catch { reject(new Error('VWorld returned an invalid response.')); }
+        catch {
+          // Diagnostics deliberately exclude the response body and request URL,
+          // both of which could contain sensitive service information.
+          reject(new Error(`VWorld returned HTTP ${upstream.statusCode || 500} (${upstream.headers['content-type'] || 'unknown content type'}).`));
+        }
       });
     }).on('error', reject);
   });
