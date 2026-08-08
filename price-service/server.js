@@ -35,6 +35,7 @@ function vworld(path, params) {
         catch {
           // Diagnostics deliberately exclude the response body and request URL,
           // both of which could contain sensitive service information.
+          console.warn(`VWorld non-JSON response: HTTP ${upstream.statusCode || 500}`, text.slice(0, 500));
           reject(new Error(`VWorld returned HTTP ${upstream.statusCode || 500} (${upstream.headers['content-type'] || 'unknown content type'}).`));
         }
       });
