@@ -25,7 +25,13 @@ function send(res, status, data) {
 
 function vworld(path, params) {
   return new Promise((resolve, reject) => {
-    const url = `https://api.vworld.kr${path}?${new URLSearchParams({ ...params, key: VWORLD_API_KEY, domain: VWORLD_DOMAIN })}`;
+    // VWorld's search endpoint authenticates with the key alone. Supplying a
+    // registered-domain parameter there can make the upstream gateway reject
+    // an otherwise valid search request. The housing data endpoints still use
+    // the registered domain, where it is required.
+    const query = { ...params, key: VWORLD_API_KEY };
+    if (path.startsWith('/ned/')) query.domain = VWORLD_DOMAIN;
+    const url = `https://api.vworld.kr${path}?${new URLSearchParams(query)}`;
     https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0', Referer: ALLOWED_ORIGIN, Origin: ALLOWED_ORIGIN } }, (upstream) => {
       let text = '';
       upstream.setEncoding('utf8');
