@@ -10,4 +10,4 @@ services:
       - key: VWORLD_API_KEY
         sync: false
       - key: ALLOWED_ORIGIN
-        value: https://property-tax-verified.vercel.app
+        value: https://official-price-finder.vercel.app
