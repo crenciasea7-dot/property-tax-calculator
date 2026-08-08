@@ -3,13 +3,19 @@ const https = require('https');
 const { URL } = require('url');
 
 const PORT = process.env.PORT || 3000;
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://property-tax-verified.vercel.app';
+// This public lookup service is dedicated to the separate official-price finder.
+// Keep the registered VWorld site and CORS origin aligned even when Render's
+// Blueprint environment synchronisation retains an older value.
+const ALLOWED_ORIGIN = 'https://official-price-finder.vercel.app';
 const VWORLD_API_KEY = process.env.VWORLD_API_KEY;
 
 function send(res, status, data) {
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    // The key remains server-side; this read-only lookup endpoint may be called
+    // by the public calculator from desktop or mobile browsers.
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Vary': 'Origin',
     'Cache-Control': 'public, max-age=300'
   });
