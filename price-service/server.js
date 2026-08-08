@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 3000;
 // Keep the registered VWorld site and CORS origin aligned even when Render's
 // Blueprint environment synchronisation retains an older value.
 const ALLOWED_ORIGIN = 'https://official-price-finder.vercel.app';
+const VWORLD_DOMAIN = 'official-price-finder.vercel.app';
 const VWORLD_API_KEY = process.env.VWORLD_API_KEY;
 
 function send(res, status, data) {
@@ -24,7 +25,7 @@ function send(res, status, data) {
 
 function vworld(path, params) {
   return new Promise((resolve, reject) => {
-    const url = `https://api.vworld.kr${path}?${new URLSearchParams({ ...params, key: VWORLD_API_KEY, domain: ALLOWED_ORIGIN })}`;
+    const url = `https://api.vworld.kr${path}?${new URLSearchParams({ ...params, key: VWORLD_API_KEY, domain: VWORLD_DOMAIN })}`;
     https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0', Referer: ALLOWED_ORIGIN, Origin: ALLOWED_ORIGIN } }, (upstream) => {
       let text = '';
       upstream.setEncoding('utf8');
